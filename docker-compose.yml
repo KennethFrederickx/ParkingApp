@@ -1,0 +1,68 @@
+version: '3.3'
+services:
+  orion-ld:
+    image: fiware/orion-ld
+    ports:
+      - "1026:1026"
+    depends_on:
+      - mongo-db
+    command: -dbhost mongo-db
+
+  mongo-db:
+    image: mongo:4.4
+    command: --nojournal
+    ports:
+      - "27017:27017"
+
+  quantumleap:
+    image: orchestracities/quantumleap:0.8.0
+    ports:
+      - "8668:8668"
+    depends_on:
+      - crate-db
+    environment:
+      - CRATE_HOST=crate-db
+
+  crate-db:
+    image: crate:latest
+    ports:
+      - "4200:4200"
+      - "4300:4300"
+
+  grafana:
+    image: grafana/grafana
+    depends_on:
+      - crate-db
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-worldmap-panel
+
+  keyrock:
+    image: fiware/idm:latest
+    hostname: keyrock
+    container_name: fiware-keyrock
+    ports:
+      - "3005:3005"
+    depends_on:
+      - mysql
+    environment:
+      - IDM_PORT=3005
+      - IDM_DB_HOST=mysql
+      - IDM_DB_PASS=idm
+      - IDM_DB_USER=idm
+      - IDM_DB_NAME=idm
+      - IDM_ADMIN_USER=admin
+      - IDM_ADMIN_EMAIL=admin@test.com
+      - IDM_ADMIN_PASS=1234
+  mysql:
+    image: mysql:5.7
+    hostname: mysql
+    container_name: db-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=idm
+      - MYSQL_USER=idm
+      - MYSQL_PASSWORD=idm
